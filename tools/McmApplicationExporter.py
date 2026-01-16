@@ -59,9 +59,10 @@ class McmApplicationExporter(McmExporterBase):
             auth = self.get_mcm_ntlm_auth(),
             headers = self.headers,
             verify = self.get_ssl_verify_param(),
-            params = body
+            params = body,
+            timeout = 15
         )
-        self.output("Initial query finished", 4)
+        self.output(f"Initial query finished. Status Code: {appSearchResponse.status_code}", 4)
         searchValue = appSearchResponse.json().get("value",[])
         self.output(f"{searchValue.__len__()} Application objects returned from {self.fqdn}", 2)
         if searchValue.__len__() == 0:
