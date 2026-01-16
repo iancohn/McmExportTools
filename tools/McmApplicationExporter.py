@@ -60,7 +60,7 @@ class McmApplicationExporter(McmExporterBase):
             headers = self.headers,
             verify = self.get_ssl_verify_param(),
             params = body,
-            timeout = 15
+            timeout = (5,15)
         )
         self.output(f"Initial query finished. Status Code: {appSearchResponse.status_code}", 4)
         searchValue = appSearchResponse.json().get("value",[])
