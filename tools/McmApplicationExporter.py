@@ -47,11 +47,12 @@ class McmApplicationExporter(McmExporterBase):
     def get_all_mcm_applications(self,limit:int = 0) -> list:
         """Retrieve all SMS_ApplicationLatest objects from MCM"""
         url = f"https://{self.fqdn}/AdminService/wmi/SMS_ApplicationLatest"
+        self.output(f"Querying url: {url}",3)
         if (limit >= 1):
             body = {"$top": limit,}
         else:
             body = {}
-        
+        self.output(f"ssl_verify = {self.get_ssl_verify_param()}", 4)
         appSearchResponse = requests.request(
             method = 'GET',
             url = url,
@@ -60,7 +61,7 @@ class McmApplicationExporter(McmExporterBase):
             verify = self.get_ssl_verify_param(),
             params = body
         )
-        
+        self.output("Initial query finished", 4)
         searchValue = appSearchResponse.json().get("value",[])
         self.output(f"{searchValue.__len__()} Application objects returned from {self.fqdn}", 2)
         if searchValue.__len__() == 0:
