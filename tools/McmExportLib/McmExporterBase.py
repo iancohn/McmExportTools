@@ -72,7 +72,7 @@ class McmExporterBase(dict):
         """
         _arg_verbose_level = self.args.verbose or 0
         if _arg_verbose_level >= verbose_level:
-            print(f"{self.__class__.__name__}: {msg}")
+            print(f"{self.__class__.__name__}: {msg}", flush=True)
     @staticmethod
     def add_common_args(parser : argparse.ArgumentParser):
         """Seed common arguments into the module"""
