@@ -193,12 +193,14 @@ class McmApplicationExporter(McmExporterBase):
                     _ = self.new_exportable_file_info(root_path=uninstall_content_location,file_relative_path=uef,files_export_path=self.files_export_path)
     
     def execute_shell(self):
-        apps = self.get_all_mcm_applications(limit = self.args.limit)
-        mount_info = None
-        local_repo = os.path.join(self.args.export_repo_path,'Application')
-        archived_app_short_models = [d for d in os.listdir(local_repo) if os.path.isdir(os.path.join(local_repo,d))]
-        self.unused_archived_content_files.extend(self.get_archived_content_files(local_repo))
         try:
+            self.output("Getting applications from mcm", 3)
+            apps = self.get_all_mcm_applications(limit = self.args.limit)
+            self.output(f"Got {len(apps)} applications from MCM.", 3)
+            mount_info = None
+            local_repo = os.path.join(self.args.export_repo_path,'Application')
+            archived_app_short_models = [d for d in os.listdir(local_repo) if os.path.isdir(os.path.join(local_repo,d))]
+            self.unused_archived_content_files.extend(self.get_archived_content_files(local_repo))
             self.output(", ".join([a['ModelName'].split('/')[1] for a in apps]), 4)
             current_app_short_models = []
             for app in apps:
