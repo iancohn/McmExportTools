@@ -46,8 +46,8 @@ import sys
 platform_name = platform.system().lower()
 arch = platform.machine().lower()
 vendor_path = os.path.join(os.path.dirname(__file__),"vendor",platform_name,arch)
-if vendor_path not in sys.path:
-    sys.path.insert(0, vendor_path)
+#if vendor_path not in sys.path:
+#    sys.path.insert(0, vendor_path)
 
 from requests_ntlm import HttpNtlmAuth
 
