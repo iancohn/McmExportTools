@@ -265,7 +265,7 @@ class McmApplicationExporter(McmExporterBase):
             self.output(json.dumps(self.smb_mounts_by_server_share,indent=2), 4)
             for mi in self.smb_mount_infos:
                 _ = self.dismount_smb(mount_info=mi)
-            
+            _ = self.remove_empty_directories(self.parent)
             _ = Path(self.parent).rmdir()
 
 if __name__ == "__main__":
