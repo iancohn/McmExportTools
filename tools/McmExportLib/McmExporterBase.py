@@ -316,7 +316,7 @@ class McmExporterBase(dict):
         if args.passw == '*':
             self.password = getpass.getpass("Password: ")
         else:
-            self.password = args.passw
+            self.password = args.passw.strip('"\'')
         self.parent = self.prepare_mount_parent()
         self.initialize_headers()
         self.initialize_ssl_verification()
