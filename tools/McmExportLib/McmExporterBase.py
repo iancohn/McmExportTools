@@ -228,7 +228,7 @@ class McmExporterBase(dict):
             self.output(f"mount > stdout > \n####\n{mnt_query_result.stdout}\n####", 3)
             if raise_error_on_failure and mount_result.returncode != 0:
                 raise Exception(mount_result.stderr)
-            result['success'] = mnt_query_result.__contains__(str(mount_path.absolute()))
+            result['success'] = mnt_query_result.stdout.__contains__(str(mount_path.absolute()))
             self.smb_mount_infos.append(result)
             self.smb_mounts_by_server_share[hashable_key_name] = result
             return result
