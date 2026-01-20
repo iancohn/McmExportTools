@@ -194,28 +194,27 @@ class McmExporterBase(dict):
             
             split_smb_user = smb_user.split('@')
             if len(split_smb_user) > 1:
-                user_string = f"{split_smb_user[1]};{split_smb_user[0]}"
+                user_string = f"{split_smb_user[1]};{quote(split_smb_user[0])}"
             else:
                 user_string = smb_user
             enc_password = quote(smb_password, safe='')
             smb_path = f"smb://{user_string}:{enc_password}@{server_name}/{share_name}"
             share_path = f"\\\\{server_name}\\{share_name}"
             result['share_path'] = share_path
-            opts = "nobrowse,soft,ro,noperm"
+            #opts = "nobrowse,soft,ro,noperm"
             mount_result = subprocess.run(
                 args = [
                     fs_mounter,
                     "-t smbfs",
                     "-v",
-                    "-o", opts,
                     smb_path,
                     str(mount_path.absolute())
                 ],
-                check=True,
+                check=False,
                 capture_output=True,
                 text=True
             )
-            self.output(f"Mount Result: {mount_result.stdout}", 3)
+            self.output(f"Mount Result: [{mount_result.returncode}] {mount_result.stdout}", 3)
             self.output(f"Mount Err: {mount_result.stderr}",3)
             ls_result = subprocess.run(
                 args = [
@@ -230,6 +229,8 @@ class McmExporterBase(dict):
             )
             self.output(f"LS > stdout > \n####\n{ls_result.stdout}\n####", 3)
             self.output(f"LS > stderr > \n####\n{ls_result.stderr}\n####", 3)
+            if raise_error_on_failure and mount_result.returncode != 0:
+                raise Exception(mount_result.stderr)
             result['success'] = True
             self.smb_mount_infos.append(result)
             self.smb_mounts_by_server_share[hashable_key_name] = result
