@@ -210,7 +210,7 @@ class McmExporterBase(dict):
                     smb_path,
                     str(mount_path.absolute())
                 ],
-                check=False,
+                check=True,
                 capture_output=True,
                 text=True
             )
@@ -223,7 +223,7 @@ class McmExporterBase(dict):
                     "-R",
                     mount_path.absolute()
                 ],
-                check=False,
+                check=True,
                 capture_output=True,
                 text=True
             )
@@ -245,7 +245,9 @@ class McmExporterBase(dict):
             return True
         try:
             self.output(f"Dismounting {mount_info.get('mount_path')}", 2)
-            _ = subprocess.run(args = [fs_dismounter,mount_info.get('mount_path')],check=True,capture_output=True,text=True)
+            dismount_result = subprocess.run(args = [fs_dismounter,mount_info.get('mount_path')],check=True,capture_output=True,text=True)
+            self.output(dismount_result.stderr, 3)
+            self.output(dismount_result.stdout, 3)
             self.remove_empty_directories(root_path=os.path.dirname(mount_info['mount_path']))
             _ = subprocess.run(
                 args = [
