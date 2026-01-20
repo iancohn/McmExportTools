@@ -201,7 +201,7 @@ class McmExporterBase(dict):
             smb_path = f"//{user_string}:{enc_password}@{server_name}/{share_name}"
             share_path = f"\\\\{server_name}\\{share_name}"
             result['share_path'] = share_path
-            opts = "nobrowse,soft,vers=3.0,ro"
+            opts = "nobrowse,soft,vers=3.0,ro,noperm"
             _ = subprocess.run(
                 args = [
                     fs_mounter,
@@ -219,6 +219,7 @@ class McmExporterBase(dict):
             return result
         except Exception as e:
             if raise_error_on_failure:
+                self.output(e, 3)
                 raise e
     def dismount_smb(
             self,mount_info : dict, 
@@ -266,7 +267,7 @@ class McmExporterBase(dict):
                 self.unused_archived_content_files.remove(local_destination_path)
             return True
         except Exception as e:
-            pass
+            False
     def initialize_headers(self):
         self.headers = {
             "Accept": "application/json", 
