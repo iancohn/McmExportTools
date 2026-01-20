@@ -119,6 +119,7 @@ class McmExporterBase(dict):
         return xml_element
     def prepare_mount_parent(self,local_path=f"/tmp/{uuid.uuid4().__str__()}") -> str:
         """Create a temporary mount folder"""
+        self.output(f"Creating {local_path} for any mounts", 3)
         parent_path = Path(local_path)
         if parent_path.exists():
             raise FileExistsError(f"Parent mount path {parent_path.absolute()} already exists.")
@@ -352,7 +353,9 @@ class McmExporterBase(dict):
             self.password = getpass.getpass("Password: ")
         else:
             self.password = args.passw.strip('"\'')
+        self.output("Creating a parent mount path", 3)
         self.parent = self.prepare_mount_parent()
+        self.output(f"{self.parent} created successfully: {os.path.exists(self.parent) and os.path.isdir(self.parent)}")
         self.initialize_headers()
         self.initialize_ssl_verification()
         self.initialize_ntlm_auth()
