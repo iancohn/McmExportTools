@@ -192,7 +192,9 @@ class McmExporterBase(dict):
                 raise FileExistsError(f"Parent mount path {str(mount_path.absolute())} already exists.")
             else:
                 mount_path.mkdir(parents=True,exist_ok=True)
-            
+            self.output(f"{str(mount_path.absolute())} exists: {mount_path.exists()}", 3)
+            if mount_path.exists() == False:
+                raise Exception("An error occurred creating the mount point")
             split_smb_user = smb_user.split('@')
             if len(split_smb_user) > 1:
                 user_string = f"{split_smb_user[1]};{quote(split_smb_user[0])}"
