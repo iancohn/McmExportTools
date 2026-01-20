@@ -204,7 +204,7 @@ class McmExporterBase(dict):
             smb_path = f"smb://{user_string}:{enc_password}@{server_name}/{share_name}"
             share_path = f"\\\\{server_name}\\{share_name}"
             result['share_path'] = share_path
-            opts = "nobrowse,soft,ro,noperm,uid=$(id -u),gid=$(id -g)"
+            opts = "nobrowse,soft,ro,noperm"
             mount_result = subprocess.run(
                 args = [
                     fs_mounter,
