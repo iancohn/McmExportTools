@@ -55,7 +55,7 @@ def is_empty(object: any) -> bool:
     if object is None:
         return True
     elif isinstance(object,bool):
-        return ([False,True].__contains__(object) == False)
+        return ([False,True].__contains__(object) == Fa lse)
     elif isinstance(object,str):
         return (object == '')
     elif isinstance(object,dict):
@@ -295,8 +295,8 @@ class McmExporterBase(dict):
     def initialize_ssl_verification(self):
         _ssl_verify = self.args.verify
         self.output(f"SSL Verify (pre-set): {type(_ssl_verify).__name__}({_ssl_verify})", 4)
-        if isinstance(_ssl_verify, bool) or ['False','True'].__contains__(str(_ssl_verify)):
-            self.ssl_verify = bool(_ssl_verify) 
+        if isinstance(_ssl_verify, bool) or ['false','true'].__contains__(str(_ssl_verify).lower()):
+            self.ssl_verify = str(_ssl_verify).lower == 'true'
         elif isinstance(_ssl_verify, str):
             if _ssl_verify.startswith('\\\\'):
                 _ssl_verify = self.convert_unc_path(_ssl_verify.lower())
