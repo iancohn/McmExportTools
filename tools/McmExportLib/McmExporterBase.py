@@ -214,8 +214,8 @@ class McmExporterBase(dict):
                 capture_output=True,
                 text=True
             )
-            self.output(mount_result.stdout, 3)
-            self.output(mount_result.stderr,3)
+            self.output(f"Mount Result: {mount_result.stdout}", 3)
+            self.output(f"Mount Err: {mount_result.stderr}",3)
             ls_result = subprocess.run(
                 args = [
                     "ls",
@@ -227,8 +227,8 @@ class McmExporterBase(dict):
                 capture_output=True,
                 text=True
             )
-            self.output(ls_result.stdout, 3)
-            self.output(ls_result.stderr, 3)
+            self.output(f"LS > stdout > \n####\n{ls_result.stdout}\n####", 3)
+            self.output(f"LS > stderr > \n####\n{ls_result.stderr}\n####", 3)
             result['success'] = True
             self.smb_mount_infos.append(result)
             self.smb_mounts_by_server_share[hashable_key_name] = result
