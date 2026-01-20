@@ -263,11 +263,15 @@ class McmApplicationExporter(McmExporterBase):
         finally:
             self.output(json.dumps(self.smb_mount_infos, indent=2),4)
             self.output(json.dumps(self.smb_mounts_by_server_share,indent=2), 4)
+            dismount_results = []
             for mi in self.smb_mount_infos:
                 if self.args.skip_smb_dismount != True:
-                    _ = self.dismount_smb(mount_info=mi)
+                    dismount_results.append(self.dismount_smb(mount_info=mi))
                 else:
                     self.output(f"Skipping dismount of {mi['share_path']} mounted at {mi['mount_path']}", 3)
+            if dismount_results.__contains__(False) or dismount_results.__contains__('False') or dismount_results.__contains__('false'):
+                self.output("One or more errors encountered while dismounting shares.", 3)
+                return
             _ = self.remove_empty_directories(self.parent)
             _ = Path(self.parent).rmdir()
 

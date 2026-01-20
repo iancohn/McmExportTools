@@ -204,12 +204,12 @@ class McmExporterBase(dict):
             smb_path = f"smb://{user_string}:{enc_password}@{server_name}/{share_name}"
             share_path = f"\\\\{server_name}\\{share_name}"
             result['share_path'] = share_path
-            #opts = "nobrowse,soft,ro,noperm"
+            opts = "nobrowse,soft,ro"
             mount_result = subprocess.run(
                 args = [
                     fs_mounter,
-                    "-t smbfs",
-                    "-v",
+                    "-t", "smbfs",
+                    "-o", opts,
                     smb_path,
                     str(mount_path.absolute())
                 ],
@@ -219,6 +219,7 @@ class McmExporterBase(dict):
             )
             self.output(f"Mount Result: [{mount_result.returncode}] {mount_result.stdout}", 3)
             self.output(f"Mount Err: {mount_result.stderr}",3)
+            self.output(f"Mount cmd: {' '.join(mount_result.args)}")
             mnt_query_result = subprocess.run(
                 args = ["mount"],
                 check=False,
@@ -244,18 +245,37 @@ class McmExporterBase(dict):
             return True
         try:
             self.output(f"Dismounting {mount_info.get('mount_path')}", 2)
-            dismount_result = subprocess.run(args = [fs_dismounter,mount_info.get('mount_path')],check=True,capture_output=True,text=True)
-            self.output(dismount_result.stderr, 3)
+            dismount_result = subprocess.run(
+                args = [fs_dismounter,mount_info.get('mount_path')],
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            
+            self.output(f"Dismount result [{dismount_result.returncode}] {dismount_result.stderr}", 3)
             self.output(dismount_result.stdout, 3)
+            if dismount_result.returncode != 0:
+                raise Exception("Error encountered while dismounting smb")
+            mnt_query_result = subprocess.run(
+                args = ["mount"],
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            self.output(mnt_query_result.stdout, 4)
+            if mnt_query_result.stdout.__contains__(mount_info['mount_path']):
+                raise Exception(f"Share {mount_info['mount_path']} appears to still be mounted.")
             self.remove_empty_directories(root_path=os.path.dirname(mount_info['mount_path']))
+            return True
             _ = subprocess.run(
                 args = [
                     "rmdir", 
                     mount_info['mount_path'],
                 ],
-                check=True,capture_output=True,text=True)
+                check=False,capture_output=True,text=True)
             return True
         except Exception as e:
+            self.output(e, 1)
             return False
     def try_copy_smb_file_to_local(self, file_relative_path:str, smb_source_path : str,local_destination_path : str) -> bool:
         """Attempt to mount an smb path and copy the indicated file"""
