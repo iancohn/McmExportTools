@@ -197,8 +197,8 @@ class McmExporterBase(dict):
                 user_string = f"{split_smb_user[1]};{split_smb_user[0]}"
             else:
                 user_string = smb_user
-            enc_password = quote(f'"{smb_password}"', safe='')
-            smb_path = f"//{user_string}:{enc_password}@{server_name}/{share_name}"
+            enc_password = quote(smb_password, safe='')
+            smb_path = f"//{user_string}:\"{enc_password}\"@{server_name}/{share_name}"
             share_path = f"\\\\{server_name}\\{share_name}"
             result['share_path'] = share_path
             _ = subprocess.run(args = [fs_mounter,smb_path,str(mount_path.absolute())],check=True,capture_output=True,text=True)
@@ -237,7 +237,7 @@ class McmExporterBase(dict):
             mount = self.mount_smb(
                 local_path=self.parent,smb_path=smb_source_path.lower(),
                 smb_user=self.args.user,smb_password=self.password,
-                raise_error_on_failure=True)
+                raise_error_on_failure=False)
             share_path = f"//{mount['server_name'].lower()}/{mount['share_name'].lower()}"
             self.output(f"Share path: {share_path}", 3)
             self.output(json.dumps(mount,indent=2), 4)
