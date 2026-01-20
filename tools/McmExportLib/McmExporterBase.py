@@ -220,7 +220,7 @@ class McmExporterBase(dict):
             self.output(f"Mount Result: [{mount_result.returncode}] {mount_result.stdout}", 3)
             self.output(f"Mount Err: {mount_result.stderr}",3)
             mnt_query_result = subprocess.run(
-                args = [mount],
+                args = ["mount"],
                 check=False,
                 capture_output=True,
                 text=True
