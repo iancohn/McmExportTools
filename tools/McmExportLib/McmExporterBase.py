@@ -198,7 +198,7 @@ class McmExporterBase(dict):
             else:
                 user_string = smb_user
             enc_password = quote(smb_password, safe='')
-            smb_path = f"//{user_string}:\"{enc_password}\"@{server_name}/{share_name}"
+            smb_path = f"//{user_string}:{enc_password}@{server_name}/{share_name}"
             share_path = f"\\\\{server_name}\\{share_name}"
             result['share_path'] = share_path
             _ = subprocess.run(args = [fs_mounter,smb_path,str(mount_path.absolute())],check=True,capture_output=True,text=True)
