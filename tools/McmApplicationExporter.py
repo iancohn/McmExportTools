@@ -264,7 +264,10 @@ class McmApplicationExporter(McmExporterBase):
             self.output(json.dumps(self.smb_mount_infos, indent=2),4)
             self.output(json.dumps(self.smb_mounts_by_server_share,indent=2), 4)
             for mi in self.smb_mount_infos:
-                _ = self.dismount_smb(mount_info=mi)
+                if self.args.skip_smb_dismount != True:
+                    _ = self.dismount_smb(mount_info=mi)
+                else:
+                    self.output(f"Skipping dismount of {mi['share_path']} mounted at {mi['mount_path']}", 3)
             _ = self.remove_empty_directories(self.parent)
             _ = Path(self.parent).rmdir()
 
@@ -273,6 +276,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     McmExporterBase.add_common_args(parser)
     parser.add_argument("--remove-deleted", action="store_true")
+    parser.add_argument("--skip-smb-dismount",action="store_true")
     args = parser.parse_args()
 
     PROCESSOR = McmApplicationExporter(args)
