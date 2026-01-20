@@ -202,17 +202,19 @@ class McmExporterBase(dict):
             share_path = f"\\\\{server_name}\\{share_name}"
             result['share_path'] = share_path
             opts = "nobrowse,soft,vers=3.0,ro,noperm"
-            _ = subprocess.run(
+            mount_result = subprocess.run(
                 args = [
                     fs_mounter,
+                    "-v",
                     "-o", opts,
                     smb_path,
                     str(mount_path.absolute())
                 ],
-                check=True,
+                check=False,
                 capture_output=True,
                 text=True
             )
+            self.output(mount_result.stderr,3)
             result['success'] = True
             self.smb_mount_infos.append(result)
             self.smb_mounts_by_server_share[hashable_key_name] = result
@@ -267,7 +269,8 @@ class McmExporterBase(dict):
                 self.unused_archived_content_files.remove(local_destination_path)
             return True
         except Exception as e:
-            False
+            self.output(e, 2)
+            return False
     def initialize_headers(self):
         self.headers = {
             "Accept": "application/json", 
