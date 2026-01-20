@@ -304,7 +304,7 @@ class McmExporterBase(dict):
                 _ssl_verify = _ssl_verify.replace(f"//{mount['server_name']}/{mount['share_name']}", mount['mount_path'])
 
             self.ssl_verify = str(Path(_ssl_verify).resolve())
-            self.output(f"SSL Verify (post-set): {type(self.ssl_verify).__name__}({self.ssl_verify})", 4)
+        self.output(f"SSL Verify (post-set): {type(self.ssl_verify).__name__}({self.ssl_verify})", 4)
     def get_ssl_verify_param(self):
         """Get the value of the 'verify' parameter for http requests
         """
