@@ -237,7 +237,7 @@ class McmExporterBase(dict):
             mount = self.mount_smb(
                 local_path=self.parent,smb_path=smb_source_path.lower(),
                 smb_user=self.args.user,smb_password=self.password,
-                raise_error_on_failure=False)
+                raise_error_on_failure=True)
             share_path = f"//{mount['server_name'].lower()}/{mount['share_name'].lower()}"
             self.output(f"Share path: {share_path}", 3)
             self.output(json.dumps(mount,indent=2), 4)
@@ -254,7 +254,8 @@ class McmExporterBase(dict):
             if self.unused_archived_content_files.__contains__(local_destination_path):
                 self.unused_archived_content_files.remove(local_destination_path)
             return True
-        except:
+        except Exception as e:
+            raise e
             return False
     def initialize_headers(self):
         self.headers = {
