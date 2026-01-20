@@ -55,7 +55,7 @@ def is_empty(object: any) -> bool:
     if object is None:
         return True
     elif isinstance(object,bool):
-        return ([False,True].__contains__(object) == Fa lse)
+        return ([False,True].__contains__(object) == False)
     elif isinstance(object,str):
         return (object == '')
     elif isinstance(object,dict):
