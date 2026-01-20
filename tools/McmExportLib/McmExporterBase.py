@@ -167,7 +167,7 @@ class McmExporterBase(dict):
     def mount_smb(
             self,local_path : str,smb_path, smb_user : str, smb_password : str,
             fs_mounter : str='/sbin/mount_smbfs',
-            raise_error_on_failure : bool = False,
+            raise_error_on_failure : bool = True,
             ) -> dict:
         result = {"success": False}
         try:
@@ -255,8 +255,7 @@ class McmExporterBase(dict):
                 self.unused_archived_content_files.remove(local_destination_path)
             return True
         except Exception as e:
-            raise e
-            return False
+            pass
     def initialize_headers(self):
         self.headers = {
             "Accept": "application/json", 
