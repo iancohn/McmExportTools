@@ -219,7 +219,9 @@ class McmExporterBase(dict):
             ls_result = subprocess.run(
                 args = [
                     "ls",
-                    "mount_path.absolute()"
+                    "-l",
+                    "-R",
+                    mount_path.absolute()
                 ],
                 check=False,
                 capture_output=True,
