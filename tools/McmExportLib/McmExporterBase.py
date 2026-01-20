@@ -201,12 +201,12 @@ class McmExporterBase(dict):
             smb_path = f"//{user_string}:{enc_password}@{server_name}/{share_name}"
             share_path = f"\\\\{server_name}\\{share_name}"
             result['share_path'] = share_path
-            opts = "nobrowse,soft,vers=3.0,ro,noperm"
+            #opts = "nobrowse,soft,vers=3.0,ro,noperm"
             mount_result = subprocess.run(
                 args = [
                     fs_mounter,
                     "-v",
-                    "-o", opts,
+                    #"-o", opts,
                     smb_path,
                     str(mount_path.absolute())
                 ],
