@@ -294,6 +294,7 @@ class McmExporterBase(dict):
         }
     def initialize_ssl_verification(self):
         _ssl_verify = self.args.verify
+        self.output(f"SSL Verify: {_ssl_verify}", 4)
         if isinstance(_ssl_verify, bool) or ['False','True'].__contains__(str(_ssl_verify)):
             self.ssl_verify = bool(_ssl_verify) 
         elif isinstance(_ssl_verify, str):
