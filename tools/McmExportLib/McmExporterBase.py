@@ -201,7 +201,18 @@ class McmExporterBase(dict):
             smb_path = f"//{user_string}:{enc_password}@{server_name}/{share_name}"
             share_path = f"\\\\{server_name}\\{share_name}"
             result['share_path'] = share_path
-            _ = subprocess.run(args = [fs_mounter,smb_path,str(mount_path.absolute())],check=True,capture_output=True,text=True)
+            opts = "nobrowse,soft,vers=3.0,ro"
+            _ = subprocess.run(
+                args = [
+                    fs_mounter,
+                    "-o", opts,
+                    smb_path,
+                    str(mount_path.absolute())
+                ],
+                check=True,
+                capture_output=True,
+                text=True
+            )
             result['success'] = True
             self.smb_mount_infos.append(result)
             self.smb_mounts_by_server_share[hashable_key_name] = result
