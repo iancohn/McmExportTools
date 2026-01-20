@@ -197,7 +197,7 @@ class McmExporterBase(dict):
                 user_string = f"{split_smb_user[1]};{split_smb_user[0]}"
             else:
                 user_string = smb_user
-            enc_password = quote(smb_password, safe='')
+            enc_password = quote(f'"{smb_password}"', safe='')
             smb_path = f"//{user_string}:{enc_password}@{server_name}/{share_name}"
             share_path = f"\\\\{server_name}\\{share_name}"
             result['share_path'] = share_path
