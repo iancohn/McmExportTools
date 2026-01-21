@@ -1,3 +1,4 @@
 lxml
 requests
 requests-ntlm
+keyring #; sys_platform == 'darwin'

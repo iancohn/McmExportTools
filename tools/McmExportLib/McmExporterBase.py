@@ -19,14 +19,14 @@
 # This module was modeled heavily on AutoPkg (https://github.com/autopkg/autopkg)
 # frameworks. 
 
-
 import platform
-import shutil
+#import shutil
 import uuid
 import json
 import subprocess
 import argparse
 import getpass
+import keyring
 from ctypes import c_int32
 from datetime import datetime
 from enum import Enum, auto
@@ -43,14 +43,31 @@ from urllib.parse import quote
 import os.path
 import sys
 
-platform_name = platform.system().lower()
-arch = platform.machine().lower()
-vendor_path = os.path.join(os.path.dirname(__file__),"vendor",platform_name,arch)
+#platform_name = platform.system().lower()
+#arch = platform.machine().lower()
+#vendor_path = os.path.join(os.path.dirname(__file__),"vendor",platform_name,arch)
 #if vendor_path not in sys.path:
 #    sys.path.insert(0, vendor_path)
 
 from requests_ntlm import HttpNtlmAuth
 
+"""def setup_credential():
+    system = platform.system()
+    if system == "Darwin":
+        try:
+            from keyring.backends import macOS
+            keyring.set_keyring(macOS.Keyring())
+        except ImportError as e:
+            raise e
+    elif system == "Windows":
+        try:
+            from keyring.backends import Windows
+            keyring.set_keyring(Windows.WinVaultKeyring())
+        except ImportError as e:
+            raise e
+
+setup_credential()
+"""
 def is_empty(object: any) -> bool:
     if object is None:
         return True
@@ -76,14 +93,15 @@ class McmExporterBase(dict):
     @staticmethod
     def add_common_args(parser : argparse.ArgumentParser):
         """Seed common arguments into the module"""
-        parser.add_argument("--user", required=True)
-        parser.add_argument("--passw", required=True)
+        parser.add_argument("--keychain-user-name", required=True)
+        parser.add_argument("--keychain-service-name", required=True)
         parser.add_argument("--mcmserver", required=True)
         parser.add_argument("--verify", required=False, default=False)
         parser.add_argument("--limit", type=int, required=False, default=0)
         _default_repo_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         parser.add_argument("--export-repo-path", type=str, default=_default_repo_path,dest='export_repo_path')
         parser.add_argument("-v","--verbose",action="count",default=0)
+
     def strip_namespaces(self,element):
         """Remove all namespaces from an XML element for easier XPath
         query support
@@ -300,7 +318,18 @@ class McmExporterBase(dict):
             if mount['success'] == False:
                 self.output(json.dumps(mount,indent=2), 3)
                 raise ConnectionAbortedError("Could not connect to smb path.")
-            shutil.copy2(local_src_path,local_destination_path)
+            #shutil.copy2(local_src_path,local_destination_path)
+            osa_copy = f'''
+            tell application "Finder" 
+                try
+                    duplicate file "{local_src_path}" to folder "{local_destination_path}"
+                end try
+            end tell
+            '''
+            osa_copy_result = subprocess.run(['osascript', '-e', osa_copy], check=True, capture_output=True,text=True)
+            self.output(f"OSA Script copy stdout: {osa_copy_result.stdout}", 3)
+            self.output(f"OSA Script Return Code: {osa_copy_result.returncode}", 3)
+            self.output(f"OSA Script stderr: {osa_copy_result.stderr}", 2)
             if self.unused_archived_content_files.__contains__(local_destination_path):
                 self.unused_archived_content_files.remove(local_destination_path)
             return True
