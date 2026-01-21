@@ -305,11 +305,11 @@ class McmExporterBase(dict):
             osa_copy = f'''
             tell application "Finder" 
                 try
-                    duplicate file "{local_src_path}" to folder "{os.path.dirname(local_destination_path)}"
+                duplicate file "{local_src_path}" to folder "{local_destination_path}"
                 end try
             end tell
             '''
-            osa_copy_result = subprocess.run(['osascript', '-s', 'o', '-e', osa_copy], check=True, capture_output=True,text=True)
+            osa_copy_result = subprocess.run(['osascript','-e', osa_copy], check=True)
             
             self.output(f"OSA Script copy stdout: {osa_copy_result.stdout}", 3)
             self.output(f"OSA Script Return Code: {osa_copy_result.returncode}", 3)
