@@ -310,6 +310,7 @@ class McmExporterBase(dict):
             end tell
             '''
             osa_copy_result = subprocess.run(['osascript', '-s', 'o', '-e', osa_copy], check=True, capture_output=True,text=True)
+            
             self.output(f"OSA Script copy stdout: {osa_copy_result.stdout}", 3)
             self.output(f"OSA Script Return Code: {osa_copy_result.returncode}", 3)
             self.output(f"OSA Script stderr: {osa_copy_result.stderr}", 2)
@@ -319,6 +320,7 @@ class McmExporterBase(dict):
             if os.path.exists(local_destination_path):
                 return True
             else:
+                self.output(f"OSA Script Command: {' '.join(osa_copy_result.args)}")
                 raise Exception("File not detected after copy operation completed")
         except Exception as e:
             self.output(e, 2)
