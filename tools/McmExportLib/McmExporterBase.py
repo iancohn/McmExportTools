@@ -248,7 +248,7 @@ class McmExporterBase(dict):
             self.output(f"Dismounting {mount_info.get('mount_path')}", 2)
             time.sleep(2)
             dismount_result = subprocess.run(
-                args = [fs_dismounter,mount_info.get('mount_path')],
+                args = [fs_dismounter,"-f",mount_info.get('mount_path')],
                 check=True,
                 capture_output=True,
                 text=True
