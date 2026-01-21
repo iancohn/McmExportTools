@@ -295,7 +295,8 @@ class McmExporterBase(dict):
             self.output(f"Mount succeeded: {mount['success']}", 2)
             self.output(f"Local source file path: {local_src_path}", 3)
             self.output(f"Local destination path: {local_destination_path}", 3)
-            os.makedirs(os.path.dirname(local_destination_path), exist_ok=True)
+            _ = os.makedirs(os.path.dirname(local_destination_path), exist_ok=True)
+            self.output(f"Archived Content Folder ({os.path.dirname(local_destination_path)}) exists: {os.path.exists(os.path.dirname(local_destination_path))}", 3)
             if mount['success'] == False:
                 self.output(json.dumps(mount,indent=2), 3)
                 raise ConnectionAbortedError("Could not connect to smb path.")
