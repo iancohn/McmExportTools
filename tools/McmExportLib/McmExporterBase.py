@@ -311,7 +311,8 @@ class McmExporterBase(dict):
             osa_copy_result = subprocess.run(['osascript', '-e', osa_copy], check=True, capture_output=True,text=True)
             self.output(f"OSA Script copy stdout: {osa_copy_result.stdout}", 3)
             self.output(f"OSA Script Return Code: {osa_copy_result.returncode}", 3)
-            self.output(f"OSA Script stderr: {osa_copy_result.stderr}", 2)            if self.unused_archived_content_files.__contains__(local_destination_path):
+            self.output(f"OSA Script stderr: {osa_copy_result.stderr}", 2)
+            if self.unused_archived_content_files.__contains__(local_destination_path):
                 self.unused_archived_content_files.remove(local_destination_path)
             return True
         except Exception as e:
