@@ -305,7 +305,7 @@ class McmExporterBase(dict):
             osa_copy = f'''
             tell application "Finder" 
                 try
-                duplicate file "{local_src_path}" to folder "{local_destination_path}"
+                    duplicate (POSIX file "{local_src_path}") to (POSIX file "{os.path.dirname(local_destination_path)}")
                 end try
             end tell
             '''
