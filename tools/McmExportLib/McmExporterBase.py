@@ -246,14 +246,16 @@ class McmExporterBase(dict):
             return True
         try:
             self.output(f"Dismounting {mount_info.get('mount_path')}", 2)
+            time.sleep(2)
             dismount_result = subprocess.run(
                 args = [fs_dismounter,mount_info.get('mount_path')],
                 check=True,
                 capture_output=True,
                 text=True
             )
-            
-            self.output(f"Dismount result [{dismount_result.returncode}] {dismount_result.stderr}", 3)
+            time.sleep(2)
+            self.output(f"Dismount result [{dismount_result.returncode}] {dismount_result.stdout}", 2)
+            self.output(f"Dismount error: {dismount_result.stderr}")
             self.output(dismount_result.stdout, 3)
             if dismount_result.returncode != 0:
                 raise Exception("Error encountered while dismounting smb")
