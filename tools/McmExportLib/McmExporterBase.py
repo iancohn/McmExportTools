@@ -36,6 +36,7 @@ from lxml import etree
 from copy import deepcopy
 from pathlib import Path
 from urllib.parse import quote
+import time
 
 # to use a base/external module in AutoPkg we need to add this path to the sys.path.
 # this violates flake8 E402 (PEP8 imports) but is unavoidable, so the following
@@ -304,7 +305,7 @@ class McmExporterBase(dict):
             osa_copy = f'''
             tell application "Finder" 
                 try
-                    duplicate file "{local_src_path}" to folder "{local_destination_path}"
+                    duplicate file "{local_src_path}" to folder "{os.path.dirname(local_destination_path)}"
                 end try
             end tell
             '''
@@ -314,7 +315,11 @@ class McmExporterBase(dict):
             self.output(f"OSA Script stderr: {osa_copy_result.stderr}", 2)
             if self.unused_archived_content_files.__contains__(local_destination_path):
                 self.unused_archived_content_files.remove(local_destination_path)
-            return True
+            time.sleep(2)
+            if os.path.exists(local_destination_path):
+                return True
+            else:
+                raise Exception("File not detected after copy operation completed")
         except Exception as e:
             self.output(e, 2)
             return False
