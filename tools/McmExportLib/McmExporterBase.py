@@ -21,7 +21,7 @@
 
 
 import platform
-import shutil
+#import shutil
 import uuid
 import json
 import subprocess
@@ -300,8 +300,18 @@ class McmExporterBase(dict):
             if mount['success'] == False:
                 self.output(json.dumps(mount,indent=2), 3)
                 raise ConnectionAbortedError("Could not connect to smb path.")
-            shutil.copy2(local_src_path,local_destination_path)
-            if self.unused_archived_content_files.__contains__(local_destination_path):
+            #shutil.copy2(local_src_path,local_destination_path)
+            osa_copy = f'''
+            tell application "Finder" 
+                try
+                    duplicate file "{local_src_path}" to folder "{local_destination_path}"
+                end try
+            end tell
+            '''
+            osa_copy_result = subprocess.run(['osascript', '-e', osa_copy], check=True, capture_output=True,text=True)
+            self.output(f"OSA Script copy stdout: {osa_copy_result.stdout}", 3)
+            self.output(f"OSA Script Return Code: {osa_copy_result.returncode}", 3)
+            self.output(f"OSA Script stderr: {osa_copy_result.stderr}", 2)            if self.unused_archived_content_files.__contains__(local_destination_path):
                 self.unused_archived_content_files.remove(local_destination_path)
             return True
         except Exception as e:
