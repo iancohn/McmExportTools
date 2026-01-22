@@ -249,9 +249,10 @@ class McmExporterBase(dict):
             success = False
             attempts = 1
             while success == False and attempts <= 20:
+                time.sleep(5)
                 dismount_result = subprocess.run(
                     args = [fs_dismounter,"-f",mount_info.get('mount_path')],
-                    check=True,
+                    check=False,
                     capture_output=True,
                     text=True
                 )
@@ -265,7 +266,7 @@ class McmExporterBase(dict):
                 #self.output(mnt_query_result.stdout, 4)
                 self.output(f"{type(mnt_query_result.stdout).__name__}({mnt_query_result.stdout})", 4)
                 if mnt_query_result.stdout.__contains__(mount_info['mount_path']) == False:
-                    self.output(f"^^ does not mount path {mount_info['mount_path']}", 4)
+                    self.output(f"^^ does not contain mount path {mount_info['mount_path']}", 4)
                     success = True
                 else:
                     self.output(f"^^ contains mount path {mount_info['mount_path']}", 4)
@@ -276,6 +277,7 @@ class McmExporterBase(dict):
                 if success == False and attempts <= 20:
                     self.output("Pausing for 60 seconds...", 4)
                     time.sleep(60)
+                    continue
             osa_dismount = f"""
             set mount_path to "{mount_info.get('mount_path')}"
             tell application "Finder"
