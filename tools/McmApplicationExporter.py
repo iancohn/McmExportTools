@@ -258,7 +258,7 @@ class McmApplicationExporter(McmExporterBase):
                     self.output(f"{a} does not exist in MCM site. It will be deleted.", 2)
                     delete_path = os.path.join(local_repo,a)
                     shutil.rmtree(delete_path,ignore_errors=True)
-            return self.parent
+            print(f"MOUNT_PARENT: '{self.parent}'")
         except Exception as e:
             raise ValueError(e)
         finally:

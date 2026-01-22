@@ -349,7 +349,7 @@ class McmExporterBase(dict):
                 raise ConnectionAbortedError("Could not connect to smb path.")
             #shutil.copy2(local_src_path,local_destination_path)
             osa_copy = f'''
-            tell application "Finder" 
+            tell application "Finder"
                 try
                     duplicate (POSIX file "{local_src_path}") to (POSIX file "{os.path.dirname(local_destination_path)}")
                 end try
@@ -440,6 +440,7 @@ class McmExporterBase(dict):
         self.initialize_headers()
         self.initialize_ssl_verification()
         self.initialize_ntlm_auth()
+        self.output("McmExporterObject initialized", 3)
         
 if __name__ == "__main__":
     PROCESSOR = McmExporterBase()
