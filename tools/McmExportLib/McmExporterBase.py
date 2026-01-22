@@ -295,6 +295,10 @@ class McmExporterBase(dict):
         except Exception as e:
             self.output(e, 1)
             return False
+    def smb_mounts_in_use(self) -> str:
+        c = subprocess.run(args=["lsof","|","grep",self.parent],check=True,capture_output=True,text=True)
+        return f"[{c.returncode}]\n{c.stderr}\n{c.stdout}"
+        
     def try_copy_smb_file_to_local(self, file_relative_path:str, smb_source_path : str,local_destination_path : str) -> bool:
         """Attempt to mount an smb path and copy the indicated file"""
         try:
