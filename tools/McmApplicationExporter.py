@@ -262,27 +262,13 @@ class McmApplicationExporter(McmExporterBase):
         except Exception as e:
             raise ValueError(e)
         finally:
-            #self.output(json.dumps(self.smb_mount_infos, indent=2),4)
-            #self.output(json.dumps(self.smb_mounts_by_server_share,indent=2), 4)
-            dismount_results = []
-            for mi in self.smb_mount_infos:
-                if self.args.skip_smb_dismount != True:
-                    dismount_results.append(self.dismount_smb(mount_info=mi))
-                else:
-                    self.output(f"Skipping dismount of {mi['share_path']} mounted at {mi['mount_path']}", 3)
-            if dismount_results.__contains__(False) or dismount_results.__contains__('False') or dismount_results.__contains__('false'):
-                self.output(f"One or more errors encountered while dismounting shares. {dismount_results}", 3)
-                return
-            _ = self.remove_empty_directories(self.parent)
-            _ = Path(self.parent).rmdir()
-
+            pass
 
 if __name__ == "__main__":
     # Add script specific arguments; parse
     parser = argparse.ArgumentParser()
     McmExporterBase.add_common_args(parser)
     parser.add_argument("--remove-deleted", action="store_true")
-    parser.add_argument("--skip-smb-dismount",action="store_true")
     args = parser.parse_args()
 
     PROCESSOR = McmApplicationExporter(args)

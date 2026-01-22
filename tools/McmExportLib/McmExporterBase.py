@@ -22,7 +22,6 @@
 
 import platform
 import shutil
-import uuid
 import json
 import subprocess
 import argparse
@@ -36,11 +35,6 @@ from lxml import etree
 from copy import deepcopy
 from pathlib import Path
 from urllib.parse import quote
-import time
-from smbprotocol.connection import Connection
-from smbprotocol.session import Session
-from smbprotocol.tree import TreeConnect
-from smbprotocol.open import Open, CreateDisposition, ShareAccess
 import smbclient
 
 # to use a base/external module in AutoPkg we need to add this path to the sys.path.
@@ -82,8 +76,8 @@ class McmExporterBase(dict):
     @staticmethod
     def add_common_args(parser : argparse.ArgumentParser):
         """Seed common arguments into the module"""
-        parser.add_argument("--user", required=True)
-        parser.add_argument("--passw", required=True)
+        parser.add_argument("--mcm-user", required=True)
+        parser.add_argument("--mcm-password", required=True)
         parser.add_argument("--mcmserver", required=True)
         parser.add_argument("--verify", required=False, default=False)
         parser.add_argument("--limit", type=int, required=False, default=0)
@@ -123,15 +117,6 @@ class McmExporterBase(dict):
                 xml_element
                 )
         return xml_element
-    def prepare_mount_parent(self,local_path=f"/tmp/{uuid.uuid4().__str__()}") -> str:
-        """Create a temporary mount folder"""
-        self.output(f"Creating {local_path} for any mounts", 3)
-        parent_path = Path(local_path)
-        if parent_path.exists():
-            raise FileExistsError(f"Parent mount path {parent_path.absolute()} already exists.")
-        else:
-            parent_path.mkdir()
-        return parent_path.absolute().__str__()
     @staticmethod
     def convert_unc_path(unc_path : str) -> str:
         """Convert a simple UNC path to a unix style smb path"""
@@ -171,224 +156,23 @@ class McmExporterBase(dict):
                 dir_path = os.path.join(root, d)
                 if not os.listdir(dir_path):
                     os.rmdir(dir_path)
-    def mount_smb(
-            self,local_path : str,smb_path, smb_user : str, smb_password : str,
-            fs_mounter : str='/sbin/mount_smbfs',
-            raise_error_on_failure : bool = True,
-            ) -> dict:
-        result = {"success": False}
-        try:
-            _smb_path = smb_path.replace('\\','/')
-            full_server_fqdn = _smb_path.strip('/').split('/')[0].lower()
-            server_name = full_server_fqdn.split(':')[0]
-            smb_ports = full_server_fqdn.split(':')[1:]
-            if len(smb_ports) == 1:
-                smb_port = smb_ports[0]
-            else:
-                smb_port = 445
-            result['server_name'] = server_name
-            share_name = _smb_path.strip('/').split('/')[1].lower()
-            result['share_name'] = share_name
-            hashable_key_name = f"{server_name}_{share_name}"
-            self.output(f"Share key name: {hashable_key_name}", 2)
-            
-            if self.smb_mounts_by_server_share.__contains__(hashable_key_name):
-                self.output(f"Mount {hashable_key_name} exists", 2)
-                self.output((json.dumps(self.smb_mounts_by_server_share[hashable_key_name],indent=2)),3)
-                return self.smb_mounts_by_server_share[hashable_key_name]
-            self.output(f"{hashable_key_name} will be mounted", 2)
-            server_name_short = server_name.split('.')[0]
-            result['server_name_short'] = server_name_short
-            mount_path = Path(f"{local_path}/{share_name}")
-            result['mount_path'] = str(mount_path.absolute())
-            if mount_path.exists():
-                raise FileExistsError(f"Parent mount path {str(mount_path.absolute())} already exists.")
-            else:
-                mount_path.mkdir(parents=True,exist_ok=True)
-            self.output(f"{str(mount_path.absolute())} exists: {mount_path.exists()}", 3)
-            if mount_path.exists() == False:
-                raise Exception("An error occurred creating the mount point")
-            split_smb_user = smb_user.split('@')
-            if len(split_smb_user) > 1:
-                user_string = f"{split_smb_user[1]};{quote(split_smb_user[0])}"
-            else:
-                user_string = smb_user
-            enc_password = quote(smb_password, safe='')
-            smb_path = f"smb://{user_string}:{enc_password}@{server_name}/{share_name}"
-            share_path = f"\\\\{server_name}\\{share_name}"
-            result['share_path'] = share_path
-            opts = "nobrowse,soft,ro,noperm"
-            mount_result = subprocess.run(
-                args = [
-                    fs_mounter,
-                    "-t", "smbfs",
-                    "-o", opts,
-                    smb_path,
-                    str(mount_path.absolute())
-                ],
-                check=False,
-                capture_output=True,
-                text=True
-            )
-            self.output(f"Mount Result: [{mount_result.returncode}] {mount_result.stdout}", 3)
-            self.output(f"Mount Err: {mount_result.stderr}",3)
-            self.output(f"Mount cmd: {' '.join(mount_result.args)}")
-            mnt_query_result = subprocess.run(
-                args = ["mount"],
-                check=False,
-                capture_output=True,
-                text=True
-            )
-            self.output(f"mount > stdout > \n####\n{mnt_query_result.stdout}\n####", 3)
-            if raise_error_on_failure and mount_result.returncode != 0:
-                raise Exception(mount_result.stderr)
-            result['success'] = mnt_query_result.stdout.__contains__(str(mount_path.absolute()))
-            self.smb_mount_infos.append(result)
-            self.smb_mounts_by_server_share[hashable_key_name] = result
-            return result
-        except Exception as e:
-            if raise_error_on_failure:
-                self.output(e, 3)
-                raise e
-    def dismount_smb(
-            self,mount_info : dict, 
-            fs_dismounter : str='/sbin/umount') -> bool:
-        """Dismount a mounted smb share given its mount_info"""
-        if mount_info.get('success', False) == False:
-            return True
-        try:
-            self.output(f"Dismounting {mount_info.get('mount_path')}", 2)
-            success = False
-            attempts = 1
-            while success == False and attempts <= 20:
-                time.sleep(5)
-                dismount_result = subprocess.run(
-                    args = [fs_dismounter,"-f",mount_info.get('mount_path')],
-                    check=False,
-                    capture_output=True,
-                    text=True
-                )
-                time.sleep(10)
-                mnt_query_result = subprocess.run(
-                    args = ["mount"],
-                    check=True,
-                    capture_output=True,
-                    text=True
-                )
-                #self.output(mnt_query_result.stdout, 4)
-                self.output(f"{type(mnt_query_result.stdout).__name__}({mnt_query_result.stdout})", 4)
-                if mnt_query_result.stdout.__contains__(mount_info['mount_path']) == False:
-                    self.output(f"^^ does not contain mount path {mount_info['mount_path']}", 4)
-                    success = True
-                else:
-                    self.output(f"^^ contains mount path {mount_info['mount_path']}", 4)
-                    success = False
-                
-                self.output(f"Dismount attempt #{attempts}: {success}")
-                attempts += 1
-                if success == False and attempts <= 20:
-                    self.output("Pausing for 60 seconds...", 4)
-                    time.sleep(60)
-                    continue
-            osa_dismount = f"""
-            set mount_path to "{mount_info.get('mount_path')}"
-            tell application "Finder"
-                repeat with d in disks
-                    try
-                        if (POSIX path of (mount point of d)) is mount_path then
-                            eject d
-                            exit repeat
-                        end if
-                    end try
-                end repeat
-            end tell
-            """
-            #dismount_result = subprocess.run(['osascript','-e', osa_dismount], check=True, capture_output=True,text=True)
-            self.output(f"Dismount [{attempts}] result [{dismount_result.returncode}] {dismount_result.stdout}", 2)
-            self.output(f"Dismount error: {dismount_result.stderr}")
-            self.output(dismount_result.stdout, 3)
-            if dismount_result.returncode != 0:
-                raise Exception("Error encountered while dismounting smb")
-            mnt_query_result = subprocess.run(
-                args = ["mount"],
-                check=True,
-                capture_output=True,
-                text=True
-            )
-            self.output(mnt_query_result.stdout, 4)
-            if mnt_query_result.stdout.__contains__(mount_info['mount_path']):
-                raise Exception(f"Share {mount_info['mount_path']} appears to still be mounted.")
-            self.remove_empty_directories(root_path=os.path.dirname(mount_info['mount_path']))
-            _ = subprocess.run(
-                args = [
-                    "rmdir", 
-                    mount_info['mount_path'],
-                ],
-                check=False,capture_output=True,text=True)
-            return True
-        except Exception as e:
-            self.output(e, 1)
-            return False
     def smb_mounts_in_use(self) -> str:
         import subprocess
         p1 = subprocess.Popen(["lsof"], stdout=subprocess.PIPE, text=True)
         p2 = subprocess.run(["grep", "mds"], stdin=p1.stdout, capture_output=True, text=True)
         return f"[{p2.returncode}]\n{p2.stderr}\n{p2.stdout}"
-        
-    def try_copy_smb_file_to_local(self, file_relative_path:str, smb_source_path : str,local_destination_path : str) -> bool:
+    def try_copy_smb_file_to_local(self, smb_source_path : str,local_destination_path : str) -> bool:
         """Attempt to mount an smb path and copy the indicated file"""
         try:
             _ = os.makedirs(os.path.dirname(local_destination_path), exist_ok=True)
             self.output(f"Archived Content Folder ({os.path.dirname(local_destination_path)}) exists: {os.path.exists(os.path.dirname(local_destination_path))}", 3)
-            smbclient.ClientConfig(username=self.args.user,password=self.password)
+            smbclient.ClientConfig(username=self.args.mcm_user,password=self.password)
             src = smb_source_path.replace("/",r'\\')
             self.output(f"Source file smb path: {src}", 3)
             self.output(f"Local destination path: {local_destination_path}", 3)
             with smbclient.open_file(src,mode="rb") as remote, open(local_destination_path, mode="wb") as local:
                 shutil.copyfileobj(remote,local)
-
             return True
-            self.output(f"Source file smb path: {smb_source_path}", 3)
-            self.output(f"File relative path: {file_relative_path}", 3)
-            self.output(f"Mounting share (if needed)", 2)
-            mount = self.mount_smb(
-                local_path=self.parent,smb_path=smb_source_path.lower(),
-                smb_user=self.args.user,smb_password=self.password,
-                raise_error_on_failure=True)
-            share_path = f"//{mount['server_name'].lower()}/{mount['share_name'].lower()}"
-            self.output(f"Share path: {share_path}", 3)
-            self.output(json.dumps(mount,indent=2), 4)
-            share_mount_path = mount['mount_path'].lower().rstrip('/')
-            local_src_path = smb_source_path.lower().replace(share_path,share_mount_path)
-            self.output(f"Mount succeeded: {mount['success']}", 2)
-            self.output(f"Local source file path: {local_src_path}", 3)
-            self.output(f"Local destination path: {local_destination_path}", 3)
-            _ = os.makedirs(os.path.dirname(local_destination_path), exist_ok=True)
-            self.output(f"Archived Content Folder ({os.path.dirname(local_destination_path)}) exists: {os.path.exists(os.path.dirname(local_destination_path))}", 3)
-            if mount['success'] == False:
-                self.output(json.dumps(mount,indent=2), 3)
-                raise ConnectionAbortedError("Could not connect to smb path.")
-            #shutil.copy2(local_src_path,local_destination_path)
-            osa_copy = f'''
-            tell application "Finder"
-                try
-                    duplicate (POSIX file "{local_src_path}") to (POSIX file "{os.path.dirname(local_destination_path)}")
-                end try
-            end tell
-            '''
-            osa_copy_result = subprocess.run(['osascript','-e', osa_copy], check=True)
-            
-            self.output(f"OSA Script copy stdout: {osa_copy_result.stdout}", 3)
-            self.output(f"OSA Script Return Code: {osa_copy_result.returncode}", 3)
-            self.output(f"OSA Script stderr: {osa_copy_result.stderr}", 2)
-            if self.unused_archived_content_files.__contains__(local_destination_path):
-                self.unused_archived_content_files.remove(local_destination_path)
-            time.sleep(2)
-            if os.path.exists(local_destination_path):
-                return True
-            else:
-                self.output(f"OSA Script Command: {' '.join(osa_copy_result.args)}")
-                raise Exception("File not detected after copy operation completed")
         except Exception as e:
             self.output(e, 2)
             return False
@@ -404,9 +188,9 @@ class McmExporterBase(dict):
             self.ssl_verify = str(_ssl_verify).lower == 'true'
         elif isinstance(_ssl_verify, str):
             if _ssl_verify.startswith('\\\\'):
-                _ssl_verify = self.convert_unc_path(_ssl_verify.lower())
-                mount = self.mount_smb(local_path=self.parent,smb_path=_ssl_verify,smb_user=self.args.user,smb_password=self.password,raise_error_on_failure=True)
-                _ssl_verify = _ssl_verify.replace(f"//{mount['server_name']}/{mount['share_name']}", mount['mount_path'])
+                _ssl_verify = os.path.join(os.path.dirname(__file__),"ssl.pem")
+                self.output(f"Copying remote cert .pem file to {_ssl_verify}")
+                self.try_copy_smb_file_to_local(smb_source_path=_ssl_verify,local_destination_path=_ssl_verify)
 
             self.ssl_verify = str(Path(_ssl_verify).resolve())
         self.output(f"SSL Verify (post-set): {type(self.ssl_verify).__name__}({self.ssl_verify})", 4)
@@ -436,8 +220,8 @@ class McmExporterBase(dict):
         self.output("NTLM Auth object does not currently exist. It will be created", 2)
         try:
             if self.password is None:
-                raise LookupError(f"No password found for {self.args.user}")
-            self.ntlm_auth = HttpNtlmAuth(self.args.user, self.password)
+                raise LookupError(f"No password found for {self.args.mcm_user}")
+            self.ntlm_auth = HttpNtlmAuth(self.args.mcm_user, self.password)
             return self.ntlm_auth
         except Exception as e:
             raise LookupError(f"Failed to retrieve credentials: {e}")
@@ -455,9 +239,6 @@ class McmExporterBase(dict):
             self.password = getpass.getpass("Password: ")
         else:
             self.password = args.passw.strip('"\'')
-        self.output("Creating a parent mount path", 3)
-        self.parent = self.prepare_mount_parent()
-        self.output(f"{self.parent} created successfully: {os.path.exists(self.parent) and os.path.isdir(self.parent)}")
         self.initialize_headers()
         self.initialize_ssl_verification()
         self.initialize_ntlm_auth()
