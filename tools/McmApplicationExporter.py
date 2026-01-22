@@ -264,7 +264,9 @@ class McmApplicationExporter(McmExporterBase):
             self.output(json.dumps(self.smb_mount_infos, indent=2),4)
             self.output(json.dumps(self.smb_mounts_by_server_share,indent=2), 4)
             dismount_results = []
-            self.output(self.smb_mounts_in_use(), 4)
+            lsof_output = self.smb_mounts_in_use()
+            self.output("### LSOF ###", 3)
+            self.output(lsof_output, 3)
             for mi in self.smb_mount_infos:
                 if self.args.skip_smb_dismount != True:
                     dismount_results.append(self.dismount_smb(mount_info=mi))
