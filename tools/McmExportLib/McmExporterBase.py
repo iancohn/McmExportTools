@@ -262,8 +262,13 @@ class McmExporterBase(dict):
                     text=True
                 )
                 #self.output(mnt_query_result.stdout, 4)
+                self.output(f"{type(mnt_query_result.stdout).__name__}({mnt_query_result.stdout})", 4)
                 if mnt_query_result.stdout.__contains__(mount_info['mount_path']) == False:
+                    self.output(f"^^ contains mount path {mount_info['mount_path']}", 4)
                     success = True
+                else:
+                    self.output(f"^^ did not contain mount path {mount_info['mount_path']}", 4)
+                    success = False
                 
                 self.output(f"Dismount attempt #{attempts}: {success}")
                 attempts += 1
