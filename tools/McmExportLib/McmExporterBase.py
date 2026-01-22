@@ -352,7 +352,6 @@ class McmExporterBase(dict):
             tell application "Finder" 
                 try
                     duplicate (POSIX file "{local_src_path}") to (POSIX file "{os.path.dirname(local_destination_path)}")
-                    close all windows
                 end try
             end tell
             '''
