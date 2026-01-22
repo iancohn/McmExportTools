@@ -255,13 +255,20 @@ class McmExporterBase(dict):
                     capture_output=True,
                     text=True
                 )
-                if dismount_result.returncode == 0 :
+                mnt_query_result = subprocess.run(
+                    args = ["mount"],
+                    check=True,
+                    capture_output=True,
+                    text=True
+                )
+                #self.output(mnt_query_result.stdout, 4)
+                if mnt_query_result.stdout.__contains__(mount_info['mount_path']) == False:
                     success = True
+                
                 self.output(f"Dismount attempt #{attempts}: {success}")
                 attempts += 1
-                if dismount_result.returncode != 0:
+                if success == False and attempts <= 20:
                     time.sleep(60)
-            dismount_result = subprocess.run(['osascript','-e', osa_dismount], check=True, capture_output=True,text=True)
             osa_dismount = f"""
             set mount_path to "{mount_info.get('mount_path')}"
             tell application "Finder"
