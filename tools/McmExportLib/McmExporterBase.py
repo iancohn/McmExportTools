@@ -298,7 +298,7 @@ class McmExporterBase(dict):
     def smb_mounts_in_use(self) -> str:
         import subprocess
         p1 = subprocess.Popen(["lsof"], stdout=subprocess.PIPE, text=True)
-        p2 = subprocess.run(["grep", self.parent], stdin=p1.stdout, capture_output=True, text=True)
+        p2 = subprocess.run(["grep", "mds"], stdin=p1.stdout, capture_output=True, text=True)
         return f"[{p2.returncode}]\n{p2.stderr}\n{p2.stdout}"
         
     def try_copy_smb_file_to_local(self, file_relative_path:str, smb_source_path : str,local_destination_path : str) -> bool:
