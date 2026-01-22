@@ -255,6 +255,7 @@ class McmExporterBase(dict):
                     capture_output=True,
                     text=True
                 )
+                time.sleep(10)
                 mnt_query_result = subprocess.run(
                     args = ["mount"],
                     check=True,
@@ -264,15 +265,16 @@ class McmExporterBase(dict):
                 #self.output(mnt_query_result.stdout, 4)
                 self.output(f"{type(mnt_query_result.stdout).__name__}({mnt_query_result.stdout})", 4)
                 if mnt_query_result.stdout.__contains__(mount_info['mount_path']) == False:
-                    self.output(f"^^ contains mount path {mount_info['mount_path']}", 4)
+                    self.output(f"^^ does not mount path {mount_info['mount_path']}", 4)
                     success = True
                 else:
-                    self.output(f"^^ did not contain mount path {mount_info['mount_path']}", 4)
+                    self.output(f"^^ contains mount path {mount_info['mount_path']}", 4)
                     success = False
                 
                 self.output(f"Dismount attempt #{attempts}: {success}")
                 attempts += 1
                 if success == False and attempts <= 20:
+                    self.output("Pausing for 60 seconds...", 4)
                     time.sleep(60)
             osa_dismount = f"""
             set mount_path to "{mount_info.get('mount_path')}"
@@ -288,7 +290,6 @@ class McmExporterBase(dict):
             end tell
             """
             #dismount_result = subprocess.run(['osascript','-e', osa_dismount], check=True, capture_output=True,text=True)
-            time.sleep(2)
             self.output(f"Dismount [{attempts}] result [{dismount_result.returncode}] {dismount_result.stdout}", 2)
             self.output(f"Dismount error: {dismount_result.stderr}")
             self.output(dismount_result.stdout, 3)
