@@ -246,14 +246,22 @@ class McmExporterBase(dict):
             return True
         try:
             self.output(f"Dismounting {mount_info.get('mount_path')}", 2)
-            time.sleep(2)
-            """dismount_result = subprocess.run(
-                args = [fs_dismounter,"-f",mount_info.get('mount_path')],
-                check=True,
-                capture_output=True,
-                text=True
-            )
-            """
+            success = False
+            attempts = 1
+            while success == False and attempts <= 20:
+                dismount_result = subprocess.run(
+                    args = [fs_dismounter,"-f",mount_info.get('mount_path')],
+                    check=True,
+                    capture_output=True,
+                    text=True
+                )
+                if dismount_result.returncode == 0 :
+                    success = True
+                self.output(f"Dismount attempt #{attempts}: {success}")
+                attempts += 1
+                if dismount_result.returncode != 0:
+                    time.sleep(60)
+            dismount_result = subprocess.run(['osascript','-e', osa_dismount], check=True, capture_output=True,text=True)
             osa_dismount = f"""
             set mount_path to "{mount_info.get('mount_path')}"
             tell application "Finder"
@@ -267,9 +275,9 @@ class McmExporterBase(dict):
                 end repeat
             end tell
             """
-            dismount_result = subprocess.run(['osascript','-e', osa_dismount], check=True, capture_output=True,text=True)
+            #dismount_result = subprocess.run(['osascript','-e', osa_dismount], check=True, capture_output=True,text=True)
             time.sleep(2)
-            self.output(f"Dismount result [{dismount_result.returncode}] {dismount_result.stdout}", 2)
+            self.output(f"Dismount [{attempts}] result [{dismount_result.returncode}] {dismount_result.stdout}", 2)
             self.output(f"Dismount error: {dismount_result.stderr}")
             self.output(dismount_result.stdout, 3)
             if dismount_result.returncode != 0:
