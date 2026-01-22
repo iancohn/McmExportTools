@@ -189,9 +189,9 @@ class McmExporterBase(dict):
         elif isinstance(_ssl_verify, str):
             if _ssl_verify.startswith('\\\\'):
                 _ssl_verify = os.path.join(os.path.dirname(__file__),"ssl.pem")
-                self.output(f"Copying remote cert .pem file to {_ssl_verify}")
-                self.try_copy_smb_file_to_local(smb_source_path=_ssl_verify,local_destination_path=_ssl_verify)
-
+                self.output(f"Copying remote cert .pem file to {_ssl_verify}", 3)
+                ssl_copy_success = self.try_copy_smb_file_to_local(smb_source_path=self.args.verify,local_destination_path=_ssl_verify)
+                self.output(f"SSL Copy succeeded: {ssl_copy_success}", 3)
             self.ssl_verify = str(Path(_ssl_verify).resolve())
         self.output(f"SSL Verify (post-set): {type(self.ssl_verify).__name__}({self.ssl_verify})", 4)
     def get_ssl_verify_param(self):
@@ -233,7 +233,6 @@ class McmExporterBase(dict):
         self.smb_mounts_by_server_share = {}
         self.smb_mount_infos = []
         self.args = args
-        self.ssl_verify = args.verify
         self.fqdn = args.mcmserver
         if args.mcm_password == '*':
             self.password = getpass.getpass("Password: ")
