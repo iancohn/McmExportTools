@@ -258,12 +258,13 @@ class McmApplicationExporter(McmExporterBase):
                     self.output(f"{a} does not exist in MCM site. It will be deleted.", 2)
                     delete_path = os.path.join(local_repo,a)
                     shutil.rmtree(delete_path,ignore_errors=True)
-            print(f"MOUNT_PARENT: '{self.parent}'")
+            
         except Exception as e:
             raise ValueError(e)
         finally:
             self.output(json.dumps(self.smb_mount_infos, indent=2),4)
             self.output(json.dumps(self.smb_mounts_by_server_share,indent=2), 4)
+            print(f"MOUNT_PARENT: '{self.parent}'")
             """
             dismount_results = []
             for mi in self.smb_mount_infos:
