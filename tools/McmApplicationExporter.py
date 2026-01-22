@@ -238,7 +238,6 @@ class McmApplicationExporter(McmExporterBase):
             for f in self.exportable_files:
                 copy_result = self.try_copy_smb_file_to_local(
                     smb_source_path = f['source_path'],
-                    file_relative_path = f['file_relative_path'],
                     local_destination_path = f['destination_path'])
                 self.output(f"Copy succeeded: {copy_result}",2)
 
