@@ -169,7 +169,7 @@ class McmApplicationExporter(McmExporterBase):
                 self.output(f"Install Command: {install_command}", 4)
                 installer_exportable_files = self.get_exportable_files_from_command(input_string=install_command)
                 for ief in installer_exportable_files:
-                    _ = self.new_exportable_file_info(root_path=install_content_location,file_relative_path=ief,files_export_path=_files_export_path)
+                    _ = self.new_exportable_file_info(root_path=install_content_location,file_relative_path=ief,files_export_path=os.path.join(_files_export_path,'Install'))
             
         #Uninstall
         uninstall_settings = installer_nodes[0].xpath('CustomData/UninstallSetting/text()')
@@ -192,7 +192,7 @@ class McmApplicationExporter(McmExporterBase):
                 uninstaller_exportable_files = self.get_exportable_files_from_command(input_string=uninstall_command)
                 self.output(f"{', '.join(uninstaller_exportable_files)}", 4)
                 for uef in uninstaller_exportable_files:
-                    _ = self.new_exportable_file_info(root_path=uninstall_content_location,file_relative_path=uef,files_export_path=self.files_export_path)
+                    _ = self.new_exportable_file_info(root_path=uninstall_content_location,file_relative_path=uef,files_export_path=os.path.join(self.files_export_path,'Uninstall'))
     
     def execute_shell(self):
         try:
@@ -238,6 +238,7 @@ class McmApplicationExporter(McmExporterBase):
             for f in self.exportable_files:
                 copy_result = self.try_copy_smb_file_to_local(
                     smb_source_path = f['source_path'],
+
                     local_destination_path = f['destination_path'])
                 self.output(f"Copy succeeded: {copy_result}",2)
 
