@@ -235,10 +235,10 @@ class McmExporterBase(dict):
         self.args = args
         self.ssl_verify = args.verify
         self.fqdn = args.mcmserver
-        if args.passw == '*':
+        if args.mcm_password == '*':
             self.password = getpass.getpass("Password: ")
         else:
-            self.password = args.passw.strip('"\'')
+            self.password = args.mcm_password.strip('"\'')
         self.initialize_headers()
         self.initialize_ssl_verification()
         self.initialize_ntlm_auth()
