@@ -262,10 +262,8 @@ class McmApplicationExporter(McmExporterBase):
         except Exception as e:
             raise ValueError(e)
         finally:
-            self.output(json.dumps(self.smb_mount_infos, indent=2),4)
-            self.output(json.dumps(self.smb_mounts_by_server_share,indent=2), 4)
-            print(f"MOUNT_PARENT: '{self.parent}'")
-            """
+            #self.output(json.dumps(self.smb_mount_infos, indent=2),4)
+            #self.output(json.dumps(self.smb_mounts_by_server_share,indent=2), 4)
             dismount_results = []
             for mi in self.smb_mount_infos:
                 if self.args.skip_smb_dismount != True:
@@ -277,7 +275,7 @@ class McmApplicationExporter(McmExporterBase):
                 return
             _ = self.remove_empty_directories(self.parent)
             _ = Path(self.parent).rmdir()
-            """
+
 
 if __name__ == "__main__":
     # Add script specific arguments; parse

@@ -21,7 +21,7 @@
 
 
 import platform
-#import shutil
+import shutil
 import uuid
 import json
 import subprocess
@@ -37,6 +37,11 @@ from copy import deepcopy
 from pathlib import Path
 from urllib.parse import quote
 import time
+from smbprotocol.connection import Connection
+from smbprotocol.session import Session
+from smbprotocol.tree import TreeConnect
+from smbprotocol.open import Open, CreateDisposition, ShareAccess
+import smbclient
 
 # to use a base/external module in AutoPkg we need to add this path to the sys.path.
 # this violates flake8 E402 (PEP8 imports) but is unavoidable, so the following
@@ -174,12 +179,19 @@ class McmExporterBase(dict):
         result = {"success": False}
         try:
             _smb_path = smb_path.replace('\\','/')
-            server_name = _smb_path.strip('/').split('/')[0].lower()
+            full_server_fqdn = _smb_path.strip('/').split('/')[0].lower()
+            server_name = full_server_fqdn.split(':')[0]
+            smb_ports = full_server_fqdn.split(':')[1:]
+            if len(smb_ports) == 1:
+                smb_port = smb_ports[0]
+            else:
+                smb_port = 445
             result['server_name'] = server_name
             share_name = _smb_path.strip('/').split('/')[1].lower()
             result['share_name'] = share_name
             hashable_key_name = f"{server_name}_{share_name}"
             self.output(f"Share key name: {hashable_key_name}", 2)
+            
             if self.smb_mounts_by_server_share.__contains__(hashable_key_name):
                 self.output(f"Mount {hashable_key_name} exists", 2)
                 self.output((json.dumps(self.smb_mounts_by_server_share[hashable_key_name],indent=2)),3)
@@ -307,7 +319,6 @@ class McmExporterBase(dict):
             if mnt_query_result.stdout.__contains__(mount_info['mount_path']):
                 raise Exception(f"Share {mount_info['mount_path']} appears to still be mounted.")
             self.remove_empty_directories(root_path=os.path.dirname(mount_info['mount_path']))
-            return True
             _ = subprocess.run(
                 args = [
                     "rmdir", 
@@ -327,6 +338,16 @@ class McmExporterBase(dict):
     def try_copy_smb_file_to_local(self, file_relative_path:str, smb_source_path : str,local_destination_path : str) -> bool:
         """Attempt to mount an smb path and copy the indicated file"""
         try:
+            _ = os.makedirs(os.path.dirname(local_destination_path), exist_ok=True)
+            self.output(f"Archived Content Folder ({os.path.dirname(local_destination_path)}) exists: {os.path.exists(os.path.dirname(local_destination_path))}", 3)
+            smbclient.ClientConfig(username=self.args.user,password=self.password)
+            src = smb_source_path.replace("/",r'\\')
+            self.output(f"Source file smb path: {src}", 3)
+            self.output(f"Local destination path: {local_destination_path}", 3)
+            with smbclient.open_file(src,mode="rb") as remote, open(local_destination_path, mode="wb") as local:
+                shutil.copyfileobj(remote,local)
+
+            return True
             self.output(f"Source file smb path: {smb_source_path}", 3)
             self.output(f"File relative path: {file_relative_path}", 3)
             self.output(f"Mounting share (if needed)", 2)
