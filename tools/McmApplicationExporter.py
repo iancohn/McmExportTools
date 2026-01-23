@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import platform
+#import platform
 import requests
 import argparse
 import json
@@ -27,13 +27,6 @@ import shlex
 import shutil
 
 import os.path
-import sys
-
-platform_name = platform.system().lower()
-arch = platform.machine().lower()
-vendor_path = os.path.join(os.path.dirname(__file__),"vendor",platform_name,arch)
-#if vendor_path not in sys.path:
-#    sys.path.insert(0, vendor_path)
 
 from McmExportLib.McmExporterBase import ( #noqa: E402
     McmExporterBase,
@@ -171,7 +164,7 @@ class McmApplicationExporter(McmExporterBase):
                 for ief in installer_exportable_files:
                     _ = self.new_exportable_file_info(root_path=install_content_location,file_relative_path=ief,files_export_path=os.path.join(_files_export_path,'Install'))
             
-        #Uninstall
+        # Uninstall
         uninstall_settings = installer_nodes[0].xpath('CustomData/UninstallSetting/text()')
         if uninstall_settings is None or len(uninstall_settings) != 1  or uninstall_settings[0] == 'NoneRequired':
             return
@@ -199,10 +192,10 @@ class McmApplicationExporter(McmExporterBase):
             self.output("Getting applications from mcm", 3)
             apps = self.get_all_mcm_applications(limit = self.args.limit)
             self.output(f"Got {len(apps)} applications from MCM.", 3)
-            mount_info = None
             local_repo = os.path.join(self.args.export_repo_path,'Application')
             archived_app_short_models = [d for d in os.listdir(local_repo) if os.path.isdir(os.path.join(local_repo,d))]
-            self.unused_archived_content_files.extend(self.get_archived_content_files(local_repo))
+            self.unused_archived_content_files.extend(self.get_archived_content_files(local_repo,depth=4))
+            self.output(f"All archived content files in {local_repo}\n{json.dumps(self.unused_archived_content_files, indent=2)}", 4)
             self.output(", ".join([a['ModelName'].split('/')[1] for a in apps]), 4)
             current_app_short_models = []
             for app in apps:
@@ -215,7 +208,7 @@ class McmApplicationExporter(McmExporterBase):
                 archived_app = self.load_json(app_definition_path)
                 
                 self.output(f"Application '{app.get('LocalizedDisplayName')}' revision \
-                        {latest_app_revision} will be archived to {app_definition_path}.")
+                 {latest_app_revision} will be archived to {app_definition_path}.")
                 self.write_json(data=app,output_path=app_definition_path)
 
                 sdmpackagexml = app.get('SDMPackageXML','')
@@ -246,11 +239,13 @@ class McmApplicationExporter(McmExporterBase):
                 self.output("Declining to remove deleted application archives.", 2)
                 return
 
+            self.output("Removing archived content files no longer needed by MCM.", 1)
+            self.output(f"{json.dumps(self.unused_archived_content_files,indent=2)}")
             for cf in self.unused_archived_content_files:
-                self.output(f"Removing '{cf}", 2)
+                self.output(f"Removing '{cf}", 3)
                 _cf = Path(cf)
                 _cf.unlink(missing_ok=True)
-            self.output(f"Removing any empty directories.", 2)
+            self.output(f"Removing any empty directories from the archive.", 2)
             self.remove_empty_directories(local_repo)
             self.output("Removing deleted applications from archives.",1)
             for a in archived_app_short_models:

@@ -19,36 +19,15 @@
 # This module was modeled heavily on AutoPkg (https://github.com/autopkg/autopkg)
 # frameworks. 
 
-
-import platform
-import shutil
-import json
-import subprocess
 import argparse
-import getpass
-from ctypes import c_int32
-from datetime import datetime
-from enum import Enum, auto
-from os import path, walk
-from io import BytesIO
-from lxml import etree
-from copy import deepcopy
-from pathlib import Path
-from urllib.parse import quote
-import smbclient
-
-# to use a base/external module in AutoPkg we need to add this path to the sys.path.
-# this violates flake8 E402 (PEP8 imports) but is unavoidable, so the following
-# imports require noqa comments for E402
+import json
 import os.path
-import sys
+from pathlib import Path
+import shutil
 
-platform_name = platform.system().lower()
-arch = platform.machine().lower()
-vendor_path = os.path.join(os.path.dirname(__file__),"vendor",platform_name,arch)
-#if vendor_path not in sys.path:
-#    sys.path.insert(0, vendor_path)
-
+import getpass
+from lxml import etree
+import smbclient
 from requests_ntlm import HttpNtlmAuth
 
 def is_empty(object: any) -> bool:
@@ -93,7 +72,10 @@ class McmExporterBase(dict):
                 e.tag = etree.QName(e).localname
         etree.cleanup_namespaces(element)
         return element
-    def convert_sdmpackagexml(self,sdmpackagexml : str, remove_namespaces : bool = True) -> etree.Element:
+    def convert_sdmpackagexml(
+            self,
+            sdmpackagexml : str,
+            remove_namespaces : bool = True) -> etree.Element:
         """Convert an SDMPackageXML string to an etree.Element object."""
         xml_element = etree.XML(
             sdmpackagexml.replace(
@@ -156,12 +138,10 @@ class McmExporterBase(dict):
                 dir_path = os.path.join(root, d)
                 if not os.listdir(dir_path):
                     os.rmdir(dir_path)
-    def smb_mounts_in_use(self) -> str:
-        import subprocess
-        p1 = subprocess.Popen(["lsof"], stdout=subprocess.PIPE, text=True)
-        p2 = subprocess.run(["grep", "mds"], stdin=p1.stdout, capture_output=True, text=True)
-        return f"[{p2.returncode}]\n{p2.stderr}\n{p2.stdout}"
-    def try_copy_smb_file_to_local(self, smb_source_path : str,local_destination_path : str) -> bool:
+    def try_copy_smb_file_to_local(
+            self,
+            smb_source_path : str,
+            local_destination_path : str) -> bool:
         """Attempt to mount an smb path and copy the indicated file"""
         try:
             _ = os.makedirs(os.path.dirname(local_destination_path), exist_ok=True)
@@ -183,17 +163,18 @@ class McmExporterBase(dict):
         }
     def initialize_ssl_verification(self):
         _ssl_verify = self.args.verify
-        self.output(f"SSL Verify (pre-set): {type(_ssl_verify).__name__}({_ssl_verify})", 4)
         if isinstance(_ssl_verify, bool) or ['false','true'].__contains__(str(_ssl_verify).lower()):
             self.ssl_verify = str(_ssl_verify).lower == 'true'
         elif isinstance(_ssl_verify, str):
             if _ssl_verify.startswith('\\\\'):
                 _ssl_verify = os.path.join(os.path.dirname(__file__),"ssl.pem")
-                self.output(f"Copying remote cert .pem file to {_ssl_verify}", 3)
+                self.output(f"Copying remote cert .pem file to {_ssl_verify}", 4)
                 ssl_copy_success = self.try_copy_smb_file_to_local(smb_source_path=self.args.verify,local_destination_path=_ssl_verify)
-                self.output(f"SSL Copy succeeded: {ssl_copy_success}", 3)
+                self.output(f"SSL Copy succeeded: {ssl_copy_success}", 4)
+            else:
+                self.output("SSL path appears to be local")
             self.ssl_verify = str(Path(_ssl_verify).resolve())
-        self.output(f"SSL Verify (post-set): {type(self.ssl_verify).__name__}({self.ssl_verify})", 4)
+        self.output(f"SSL Verify: {type(self.ssl_verify).__name__}({self.ssl_verify})", 4)
     def get_ssl_verify_param(self):
         """Get the value of the 'verify' parameter for http requests
         """
@@ -215,7 +196,8 @@ class McmExporterBase(dict):
         """Construct an HttpNtlmAuth object from the retrieved
         details
         """
-        if self.__getattribute__('ntlm_auth') is not None and isinstance(self.ntlm_auth, HttpNtlmAuth):
+        if self.__getattribute__('ntlm_auth') is not None and \
+            isinstance(self.ntlm_auth, HttpNtlmAuth):
             return self.ntlm_auth
         self.output("NTLM Auth object does not currently exist. It will be created", 2)
         try:

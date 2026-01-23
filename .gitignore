@@ -10,3 +10,6 @@
 # Virtual environments
 .venv/
 venv/
+
+# don't track ssl.pem
+ssl.pem
