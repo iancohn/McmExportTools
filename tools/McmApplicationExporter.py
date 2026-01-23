@@ -167,6 +167,7 @@ class McmApplicationExporter(McmExporterBase):
         # Uninstall
         uninstall_settings = installer_nodes[0].xpath('CustomData/UninstallSetting/text()')
         if uninstall_settings is None or len(uninstall_settings) != 1  or uninstall_settings[0] == 'NoneRequired':
+            self.output("No uninstall content to examine.", 3)
             return
         uninstall_setting = uninstall_settings[0]
         if uninstall_setting == 'SameAsInstall':
@@ -177,15 +178,15 @@ class McmApplicationExporter(McmExporterBase):
                 uninstall_content_id = install_content_ids[0]
                 uninstaller_content_xpath = f"Contents/Content[@ContentId=\"{uninstall_content_id}\"]/Location/text()"
                 uninstall_content_location = installer_nodes[0].xpath(uninstaller_content_xpath)[0]
-            self.output(f"Content Location: {uninstall_content_location}", 4)
-            uninstall_commands = installer_nodes[0].xpath('CustomData/UninstallCommandLine/text()')
-            if len(uninstall_commands) == 1:
-                uninstall_command = uninstall_commands[0]
-                self.output(f"Uninstall Command: {uninstall_command}", 4)
-                uninstaller_exportable_files = self.get_exportable_files_from_command(input_string=uninstall_command)
-                self.output(f"{', '.join(uninstaller_exportable_files)}", 4)
-                for uef in uninstaller_exportable_files:
-                    _ = self.new_exportable_file_info(root_path=uninstall_content_location,file_relative_path=uef,files_export_path=os.path.join(_files_export_path,'Uninstall'))
+        self.output(f"Content Location: {uninstall_content_location}", 4)
+        uninstall_commands = installer_nodes[0].xpath('CustomData/UninstallCommandLine/text()')
+        if len(uninstall_commands) == 1:
+            uninstall_command = uninstall_commands[0]
+            self.output(f"Uninstall Command: {uninstall_command}", 4)
+            uninstaller_exportable_files = self.get_exportable_files_from_command(input_string=uninstall_command)
+            self.output(f"{', '.join(uninstaller_exportable_files)}", 4)
+            for uef in uninstaller_exportable_files:
+                _ = self.new_exportable_file_info(root_path=uninstall_content_location,file_relative_path=uef,files_export_path=os.path.join(_files_export_path,'Uninstall'))
     
     def execute_shell(self):
         try:
