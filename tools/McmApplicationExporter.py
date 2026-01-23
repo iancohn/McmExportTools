@@ -185,7 +185,7 @@ class McmApplicationExporter(McmExporterBase):
                 uninstaller_exportable_files = self.get_exportable_files_from_command(input_string=uninstall_command)
                 self.output(f"{', '.join(uninstaller_exportable_files)}", 4)
                 for uef in uninstaller_exportable_files:
-                    _ = self.new_exportable_file_info(root_path=uninstall_content_location,file_relative_path=uef,files_export_path=os.path.join(self.files_export_path,'Uninstall'))
+                    _ = self.new_exportable_file_info(root_path=uninstall_content_location,file_relative_path=uef,files_export_path=os.path.join(_files_export_path,'Uninstall'))
     
     def execute_shell(self):
         try:
