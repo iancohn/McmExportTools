@@ -118,7 +118,7 @@ class McmApplicationExporter(McmExporterBase):
         if (self.exportable_files_by_srcdst_hash.__contains__(srcdst_hash)):
             self.output(f"{file_relative_path} has already been marked for export", 4)
             return
-        self.output(f"Marking {file_relative_path} for export", 3)
+        self.output(f"Marking {file_relative_path} for export to folder {Path(files_export_path).parts[-2]}", 3)
         exportable_file_info = {
             "source_path": source_path,
             "destination_path": destination_path,
