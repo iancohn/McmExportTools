@@ -91,15 +91,18 @@ class McmApplicationExporter(McmExporterBase):
         split_command = shlex.split(s=input_string, posix=False)
         files = []
         for command_part in split_command:
-            stripped_part = command_part.strip('"\'')
-            if stripped_part.startswith('.\\'):
-                stripped_part = stripped_part[2:]
-            if stripped_part.startswith("\\\\") or stripped_part.__contains__('://'):
-                continue
-            if lower_exts.__contains__(
-                os.path.splitext(stripped_part)[1].lower().lstrip('.')
-                ):
-                files.append(stripped_part.replace('\\','/'))
+            try:
+                stripped_part = command_part.strip('"\'')
+                if stripped_part.startswith('.\\'):
+                    stripped_part = stripped_part[2:]
+                if stripped_part.startswith("\\\\") or stripped_part.__contains__('://'):
+                    continue
+                if lower_exts.__contains__(
+                    os.path.splitext(stripped_part)[1].lower().lstrip('.')
+                    ):
+                    files.append(stripped_part.replace('\\','/'))
+            except Exception as e:
+                self.output(f"Exception at command part {e}", 2)
         return files
     
     def new_exportable_file_info(
@@ -162,7 +165,10 @@ class McmApplicationExporter(McmExporterBase):
                 self.output(f"Install Command: {install_command}", 4)
                 installer_exportable_files = self.get_exportable_files_from_command(input_string=install_command)
                 for ief in installer_exportable_files:
-                    _ = self.new_exportable_file_info(root_path=install_content_location,file_relative_path=ief,files_export_path=os.path.join(_files_export_path,'Install'))
+                    try:
+                        _ = self.new_exportable_file_info(root_path=install_content_location,file_relative_path=ief,files_export_path=os.path.join(_files_export_path,'Install'))
+                    except Exception as e:
+                        self.output(f"Exception while parsing {ief}")
             
         # Uninstall
         uninstall_settings = installer_nodes[0].xpath('CustomData/UninstallSetting/text()')
@@ -186,7 +192,10 @@ class McmApplicationExporter(McmExporterBase):
             uninstaller_exportable_files = self.get_exportable_files_from_command(input_string=uninstall_command)
             self.output(f"{', '.join(uninstaller_exportable_files)}", 4)
             for uef in uninstaller_exportable_files:
-                _ = self.new_exportable_file_info(root_path=uninstall_content_location,file_relative_path=uef,files_export_path=os.path.join(_files_export_path,'Uninstall'))
+                try:
+                    _ = self.new_exportable_file_info(root_path=uninstall_content_location,file_relative_path=uef,files_export_path=os.path.join(_files_export_path,'Uninstall'))
+                except Exception as e:
+                    self.output(f"Exception while parsing {uef}")
     
     def execute_shell(self):
         try:
