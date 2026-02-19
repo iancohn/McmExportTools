@@ -211,7 +211,7 @@ class McmApplicationExporter(McmExporterBase):
             current_app_short_models = []
             for app in apps:
                 try:
-                    self.output(f"Processing CI_ID({app.get('CI_ID')})")
+                    self.output(f"Processing CI_ID({app.get('CI_ID')})", 4)
                     short_model = app.get('ModelName','ERR').split('/')[-1]
                     current_app_short_models.append(short_model)
                     base_export_path = os.path.join(local_repo,short_model)
