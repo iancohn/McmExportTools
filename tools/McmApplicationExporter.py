@@ -74,11 +74,12 @@ class McmApplicationExporter(McmExporterBase):
                 headers = self.headers, 
                 verify = self.get_ssl_verify_param(),
             )
+            self.output(f"Detail query result: {app} {app.reason}")
             app_value = app.json().get('value',[])
             if len(app_value) == 1:
                 v['SDMPackageXML'] = app_value[0].get('SDMPackageXML','')
             all_application_details.append(v)
-                
+            self.output(f"Got appliction {v.get('CI_ID')}")    
         return all_application_details
     @staticmethod
     def get_exportable_files_from_command(
@@ -209,6 +210,7 @@ class McmApplicationExporter(McmExporterBase):
             self.output(", ".join([a['ModelName'].split('/')[1] for a in apps]), 4)
             current_app_short_models = []
             for app in apps:
+                self.output(f"Processing CI_ID({app.get('CI_ID')})")
                 short_model = app.get('ModelName','ERR').split('/')[-1]
                 current_app_short_models.append(short_model)
                 base_export_path = os.path.join(local_repo,short_model)
