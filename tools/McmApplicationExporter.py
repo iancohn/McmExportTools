@@ -49,7 +49,7 @@ class McmApplicationExporter(McmExporterBase):
         appSearchResponse = requests.request(
             method = 'GET',
             url = url,
-            auth = self.get_mcm_ntlm_auth(),
+            auth = self.get_mcm_auth(),
             headers = self.headers,
             verify = self.get_ssl_verify_param(),
             params = body,
@@ -70,7 +70,7 @@ class McmApplicationExporter(McmExporterBase):
             app = requests.request(
                 method = 'GET', 
                 url = appUrl, 
-                auth = self.get_mcm_ntlm_auth(), 
+                auth = self.get_mcm_auth(), 
                 headers = self.headers, 
                 verify = self.get_ssl_verify_param(),
             )

@@ -1,4 +1,6 @@
 lxml
 requests
-requests-ntlm
+#requests-ntlm
 smbprotocol
+gssapi
+requests-gssapi

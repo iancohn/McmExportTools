@@ -21,14 +21,17 @@
 
 import argparse
 import json
-import os.path
+import os
 from pathlib import Path
 import shutil
+
 
 import getpass
 from lxml import etree
 import smbclient
-from requests_ntlm import HttpNtlmAuth
+import gssapi
+#from requests_ntlm import HttpNtlmAuth
+from requests_gssapi import HTTPSPNEGOAuth, OPTIONAL
 
 def is_empty(object: any) -> bool:
     if object is None:
@@ -187,24 +190,51 @@ class McmExporterBase(dict):
             return self.ssl_verify
         except Exception as e:
             raise LookupError(f"Failed to retrieve ssl verification: {e}")
+    def initialize_auth(self):
+        #self.initialize_ntlm_auth()
+        self.initialize_gss_auth()
+    def get_mcm_auth(self):
+        #self.get_mcm_ntlm_auth()
+        self.get_mcm_gss_auth()
+    """
     def initialize_ntlm_auth(self):
         if (self.fqdn == None or self.fqdn == ''):
             raise ValueError("mcmserver cannot be blank")
-        self.ntlm_auth = None
+        self.auth = None
         _ = self.get_mcm_ntlm_auth()
     def get_mcm_ntlm_auth(self) -> HttpNtlmAuth:
-        """Construct an HttpNtlmAuth object from the retrieved
+        "Construct an HttpNtlmAuth object from the retrieved
+        details
+        "
+        if self.__getattribute__('auth') is not None and \
+            isinstance(self.auth, HttpNtlmAuth):
+            return self.auth
+        self.output("NTLM Auth object does not currently exist. It will be created", 2)
+    """
+    def initialize_gss_auth(self):
+        if (self.fqdn == None or self.fqdn == ''):
+            raise ValueError("mcmserver cannot be blank")
+        self.auth = None
+        _ = self.get_mcm_gss_auth()
+    def get_mcm_gss_auth(self):
+        """Construct a GSSAPI auth object from the retrieved
         details
         """
-        if self.__getattribute__('ntlm_auth') is not None and \
-            isinstance(self.ntlm_auth, HttpNtlmAuth):
-            return self.ntlm_auth
-        self.output("NTLM Auth object does not currently exist. It will be created", 2)
+        if self.__getattribute__('auth') is not None and \
+            isinstance(self.auth, HTTPSPNEGOAuth):
+            return self.auth
+        self.output("GSSAPI Auth object does not currently exist. It will be created", 2)
         try:
             if self.password is None:
                 raise LookupError(f"No password found for {self.args.mcm_user}")
-            self.ntlm_auth = HttpNtlmAuth(self.args.mcm_user, self.password)
-            return self.ntlm_auth
+            gssapi_name = gssapi.Name(self.args.mcm_user,gssapi.NameType.user)
+            gssapi_cred = gssapi.raw.acquire_cred_with_password(
+                name = gssapi_name,
+                password = self.password.encode(),
+                usage='initiate'
+                )
+            self.auth = HTTPSPNEGOAuth(creds = gssapi_cred.creds,mutual_authentication=OPTIONAL)
+            return self.auth
         except Exception as e:
             raise LookupError(f"Failed to retrieve credentials: {e}")
     def __init__(self, args):
@@ -222,7 +252,7 @@ class McmExporterBase(dict):
             self.password = args.mcm_password.strip('"\'')
         self.initialize_headers()
         self.initialize_ssl_verification()
-        self.initialize_ntlm_auth()
+        self.initialize_auth()
         self.output("McmExporterObject initialized", 3)
         
 if __name__ == "__main__":
