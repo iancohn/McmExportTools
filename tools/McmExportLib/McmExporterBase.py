@@ -25,7 +25,6 @@ import os
 from pathlib import Path
 import shutil
 
-
 import getpass
 from lxml import etree
 import smbclient
@@ -195,7 +194,7 @@ class McmExporterBase(dict):
         self.initialize_gss_auth()
     def get_mcm_auth(self):
         #self.get_mcm_ntlm_auth()
-        self.get_mcm_gss_auth()
+        return self.get_mcm_gss_auth()
     """
     def initialize_ntlm_auth(self):
         if (self.fqdn == None or self.fqdn == ''):
