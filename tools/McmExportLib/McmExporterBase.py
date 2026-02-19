@@ -219,6 +219,7 @@ class McmExporterBase(dict):
         """Construct a GSSAPI auth object from the retrieved
         details
         """
+        self.auth = None
         if self.__getattribute__('auth') is not None and \
             isinstance(self.auth, HTTPSPNEGOAuth):
             return self.auth
