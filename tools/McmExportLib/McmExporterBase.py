@@ -226,11 +226,13 @@ class McmExporterBase(dict):
         teardown_result = subprocess.run(['kdestroy','-c',f'{ccname}'],capture_output=True,check=True,text=True)
         self.output(f"kdestroy return code: {teardown_result.returncode}", 2)
         
-        self.output("Deleting temporary KRB5_CONFIG", 3)
-        _ = os.unlink(self._krb5_config)
+        if os.path.exists(self._krb5_config):
+            self.output("Deleting temporary KRB5_CONFIG", 3)
+            _ = os.unlink(self._krb5_config)
 
-        self.output('Deleting temporary credential cache', 3)
-        _ = os.unlink(self._krb5ccache)
+        if os.path.exists(self._krb5ccache):
+            self.output('Deleting temporary credential cache', 3)
+            _ = os.unlink(self._krb5ccache)
 
 
     def _build_krb_config(self,realm: str, domain: str, auto_resolve: bool, kdcs: list[str], admin_servers: list[str]) -> str:
