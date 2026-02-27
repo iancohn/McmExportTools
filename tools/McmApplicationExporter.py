@@ -57,6 +57,7 @@ class McmApplicationExporter(McmExporterBase):
         )
         self.output(f"Initial query finished. Status Code: {appSearchResponse.status_code}", 4)
         searchValue = appSearchResponse.json().get("value",[])
+        appSearchResponse.close()
         self.output(f"{searchValue.__len__()} Application objects returned from {self.fqdn}", 2)
         if searchValue.__len__() == 0:
             self.output(f"No applications found in {self.fqdn}", 2)
@@ -76,10 +77,11 @@ class McmApplicationExporter(McmExporterBase):
             )
             self.output(f"Detail query result: {app} {app.reason}")
             app_value = app.json().get('value',[])
+            app.close()
             if len(app_value) == 1:
                 v['SDMPackageXML'] = app_value[0].get('SDMPackageXML','')
             all_application_details.append(v)
-            self.output(f"Got appliction {v.get('CI_ID')}")    
+            self.output(f"Got appliction {v.get('CI_ID')}")
         return all_application_details
     @staticmethod
     def get_exportable_files_from_command(
@@ -271,8 +273,6 @@ class McmApplicationExporter(McmExporterBase):
             
         except Exception as e:
             raise ValueError(e)
-        finally:
-            pass
 
 if __name__ == "__main__":
     # Add script specific arguments; parse

@@ -1,6 +1,6 @@
 lxml
 requests
-#requests-ntlm
 smbprotocol
 gssapi
 requests-gssapi
+dnspython
