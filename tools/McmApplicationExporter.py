@@ -222,8 +222,8 @@ class McmApplicationExporter(McmExporterBase):
                     latest_app_revision = app.get('CIVersion',0)
                     archived_app = self.load_json(app_definition_path)
                     
-                    self.output(f"Application '{app.get('LocalizedDisplayName')}' revision \
-                        {latest_app_revision} will be archived to {app_definition_path}.")
+                    self.output(f"Application '{app.get('LocalizedDisplayName')}' revision " +
+                        f"{latest_app_revision} will be archived to {app_definition_path}.")
                     self.write_json(data=app,output_path=app_definition_path)
 
                     sdmpackagexml = app.get('SDMPackageXML','')
@@ -238,8 +238,8 @@ class McmApplicationExporter(McmExporterBase):
                         self.inspect_deployment_type_for_exportable_files(deployment_type=d)
                     
                     if (archived_app.get('CIVersion',0) == latest_app_revision):
-                        self.output(f"Application '{app.get('LocalizedDisplayName')}' \
-                            revision {latest_app_revision} is already archived. Skipping.")
+                        self.output(f"Application '{app.get('LocalizedDisplayName')}' " +
+                            f"revision {latest_app_revision} is already archived. Skipping.")
                         continue
                 except Exception as e:
                     self.output(f"Error parsing {app.get('CI_ID')}: {e}", 4)
