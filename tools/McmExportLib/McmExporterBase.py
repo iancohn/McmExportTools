@@ -233,8 +233,6 @@ class McmExporterBase(dict):
         if os.path.exists(self._krb5ccache):
             self.output('Deleting temporary credential cache', 3)
             _ = os.unlink(self._krb5ccache)
-
-
     def _build_krb_config(self,realm: str, domain: str, auto_resolve: bool, kdcs: list[str], admin_servers: list[str]) -> str:
         lines = []
         lines.append('[libdefaults]')
@@ -375,21 +373,6 @@ class McmExporterBase(dict):
         kinit_result = subprocess.run(['kinit',f'--password-file={self.pwd_file}', '-c',ccname, self.mcm_user], capture_output=True,text=True,check=True)
         self.output(f'kinit return code: [{kinit_result.returncode}] {kinit_result.stderr}')
         
-    def _check_valid_tgt(self, username : str) -> dict:
-        klist_check_result = subprocess.run(['klist', '--json','-l'], capture_output=True,text=True,check=True)
-        if klist_check_result.returncode != 0:
-            raise Exception('Encountered an error while calling klist')
-        result = {"result": False, "tickets": []}
-        tickets = json.loads(klist_check_result.stdout.replace('\\','\\\\'))
-        if len(tickets) == 0:
-            return result
-        for ticket in tickets:
-            if ticket.get('Expired','no') == 'no' and ticket.get('Name','').lower() == username.lower():
-                ticket['Result'] = True
-                result['tickets'].append(ticket)
-            else:
-                continue
-        return result
     def initialize_auth(self):
         #self.initialize_ntlm_auth()
         self.initialize_gss_auth()
